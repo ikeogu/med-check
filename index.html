@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KCH MedCard — Hospital Identity System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #0a1628;
+      --navy-mid: #112240;
+      --navy-light: #1a3358;
+      --teal: #00b4d8;
+      --teal-light: #90e0ef;
+      --gold: #f4a261;
+      --gold-light: #ffd6a5;
+      --green: #06d6a0;
+      --red: #ef476f;
+      --white: #f8fafc;
+      --gray-100: #e2e8f0;
+      --gray-300: #94a3b8;
+      --gray-500: #64748b;
+      --text: #ccd6f6;
+      --card-bg: #112240;
+      --card-border: rgba(100, 210, 255, 0.12);
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --radius: 16px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0,180,216,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(244,162,97,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse 100% 80% at 50% 50%, rgba(6,214,160,0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #root { position: relative; z-index: 1; }
+
+    /* ─── NAV ─── */
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px;
+      background: rgba(10,22,40,0.95);
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(20px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .nav-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--teal), var(--green));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .nav-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--white);
+      letter-spacing: -0.3px;
+    }
+    .nav-title span { color: var(--teal); }
+    .nav-tabs {
+      display: flex; gap: 4px;
+    }
+    .nav-tab {
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--gray-300);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-tab:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+    .nav-tab.active { background: rgba(0,180,216,0.15); color: var(--teal); }
+
+    /* ─── LANDING ─── */
+    .landing {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+    .landing-hero {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .landing-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,180,216,0.1);
+      border: 1px solid rgba(0,180,216,0.3);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 12px;
+      color: var(--teal);
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .landing-h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(38px, 6vw, 64px);
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    .landing-h1 em { font-style: italic; color: var(--teal); }
+    .landing-sub {
+      font-size: 18px;
+      color: var(--gray-300);
+      max-width: 560px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+    .btn-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      padding: 12px 28px;
+      border-radius: 10px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--teal), #0094b8);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(0,180,216,0.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,180,216,0.45); }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--card-border);
+      color: var(--gray-300);
+    }
+    .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), #e07a3a);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(244,162,97,0.3);
+    }
+    .btn-gold:hover { transform: translateY(-2px); }
+    .btn-sm { padding: 8px 18px; font-size: 13px; }
+
+    /* Stats row */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      margin-bottom: 60px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 28px;
+      text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .stat-card.teal::before { background: linear-gradient(90deg, var(--teal), var(--teal-light)); }
+    .stat-card.gold::before { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+    .stat-card.green::before { background: linear-gradient(90deg, var(--green), #90f3d6); }
+    .stat-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 42px;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--gray-300);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    /* Entity grid */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      color: var(--white);
+    }
+    .section-pill {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .pill {
+      padding: 4px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .pill-teal { background: rgba(0,180,216,0.15); color: var(--teal); }
+    .pill-gold { background: rgba(244,162,97,0.15); color: var(--gold); }
+    .pill-green { background: rgba(6,214,160,0.15); color: var(--green); }
+    .pill.active { opacity: 1; }
+    .pill:not(.active) { opacity: 0.5; }
+
+    .entity-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+    .entity-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative; overflow: hidden;
+    }
+    .entity-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0,180,216,0.04), transparent);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .entity-card:hover { transform: translateY(-4px); border-color: rgba(0,180,216,0.3); box-shadow: var(--shadow); }
+    .entity-card:hover::after { opacity: 1; }
+
+    .entity-top {
+      display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px;
+    }
+    .avatar {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .avatar-patient { background: linear-gradient(135deg, rgba(0,180,216,0.2), rgba(0,180,216,0.05)); border: 1.5px solid rgba(0,180,216,0.3); }
+    .avatar-doctor { background: linear-gradient(135deg, rgba(244,162,97,0.2), rgba(244,162,97,0.05)); border: 1.5px solid rgba(244,162,97,0.3); }
+    .avatar-nurse { background: linear-gradient(135deg, rgba(6,214,160,0.2), rgba(6,214,160,0.05)); border: 1.5px solid rgba(6,214,160,0.3); }
+    .entity-name {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--white);
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+    .entity-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--gray-300);
+    }
+    .type-badge {
+      margin-left: auto;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-patient { background: rgba(0,180,216,0.15); color: var(--teal); }
+    .badge-doctor { background: rgba(244,162,97,0.15); color: var(--gold); }
+    .badge-nurse { background: rgba(6,214,160,0.15); color: var(--green); }
+
+    .entity-info {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      font-size: 13px;
+      color: var(--gray-300);
+      margin-bottom: 16px;
+    }
+    .info-item { display: flex; flex-direction: column; gap: 2px; }
+    .info-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--gray-500); }
+    .info-val { color: var(--text); font-weight: 500; }
+
+    .entity-actions {
+      display: flex; gap: 8px;
+    }
+
+    /* ─── DETAIL PAGE ─── */
+    .detail-page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--gray-300);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 8px 0;
+      margin-bottom: 32px;
+      transition: color 0.2s;
+    }
+    .back-btn:hover { color: var(--teal); }
+
+    .detail-header {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 32px;
+      display: flex; gap: 28px;
+      margin-bottom: 24px;
+      position: relative; overflow: hidden;
+    }
+    .detail-header::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    }
+    .detail-header.patient::before { background: linear-gradient(90deg, var(--teal), var(--teal-light)); }
+    .detail-header.doctor::before { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+    .detail-header.nurse::before { background: linear-gradient(90deg, var(--green), #90f3d6); }
+
+    .detail-avatar {
+      width: 100px; height: 100px;
+      border-radius: 20px;
+      font-size: 50px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .detail-identity { flex: 1; }
+    .detail-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+    .detail-meta {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .detail-meta-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px;
+      color: var(--gray-300);
+    }
+    .detail-meta-item span { font-weight: 600; color: var(--text); }
+
+    .detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+      margin-bottom: 24px;
+    }
+    .detail-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .detail-section.full { grid-column: 1 / -1; }
+    .section-heading {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--teal);
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-heading.gold { color: var(--gold); }
+    .section-heading.green { color: var(--green); }
+    .section-heading.red { color: var(--red); }
+
+    .field-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .field-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .field-key { font-size: 13px; color: var(--gray-300); flex: 1; }
+    .field-val { font-size: 13px; color: var(--white); font-weight: 600; text-align: right; flex: 1.5; }
+
+    .vital-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+    }
+    .vital-item {
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .vital-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--gray-500); margin-bottom: 4px; }
+    .vital-val { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: var(--white); }
+    .vital-unit { font-size: 11px; color: var(--gray-300); }
+
+    .drug-list { display: flex; flex-direction: column; gap: 10px; }
+    .drug-item {
+      background: rgba(244,162,97,0.06);
+      border: 1px solid rgba(244,162,97,0.15);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .drug-name { font-weight: 700; color: var(--gold); margin-bottom: 2px; }
+
+    /* ─── ID CARD ─── */
+    .id-card-page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px;
+    }
+    .id-card-wrapper {
+      display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap;
+    }
+    .id-card {
+      width: 380px;
+      background: linear-gradient(145deg, #112240, #0d1b33);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .id-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,180,216,0.12), transparent 70%);
+    }
+    .id-card-top {
+      padding: 20px 24px 16px;
+      background: linear-gradient(135deg, rgba(0,180,216,0.15), rgba(0,180,216,0.03));
+      border-bottom: 1px solid var(--card-border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .hospital-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: var(--white);
+    }
+    .hospital-sub {
+      font-size: 10px;
+      color: var(--gray-300);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .card-type-badge {
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .id-card-body {
+      padding: 20px 24px;
+      display: flex; gap: 16px;
+    }
+    .card-avatar {
+      width: 80px; height: 90px;
+      border-radius: 12px;
+      font-size: 40px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-info { flex: 1; }
+    .card-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 16px;
+      color: var(--white);
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+    .card-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--teal);
+      margin-bottom: 10px;
+    }
+    .card-fields {
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .card-field {
+      display: flex; gap: 8px;
+      font-size: 11px;
+    }
+    .cf-label { color: var(--gray-500); min-width: 50px; }
+    .cf-val { color: var(--text); font-weight: 600; }
+    .id-card-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--card-border);
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(0,0,0,0.2);
+    }
+    .qr-container {
+      background: white;
+      padding: 6px;
+      border-radius: 8px;
+      width: 72px; height: 72px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .id-card-footer-text { font-size: 10px; color: var(--gray-500); line-height: 1.5; }
+    .id-card-footer-text strong { display: block; color: var(--gray-300); font-size: 11px; margin-bottom: 2px; }
+
+    .card-controls {
+      flex: 1;
+      min-width: 280px;
+    }
+    .card-controls h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--white);
+      margin-bottom: 20px;
+    }
+    .qr-info-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .qr-info-box p { font-size: 13px; color: var(--gray-300); line-height: 1.7; margin-bottom: 12px; }
+    .qr-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--teal);
+      background: rgba(0,180,216,0.08);
+      border: 1px solid rgba(0,180,216,0.2);
+      border-radius: 6px;
+      padding: 8px 12px;
+      word-break: break-all;
+    }
+    .print-hint {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-top: 12px;
+    }
+
+    /* ─── MISC ─── */
+    .tag {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(239,71,111,0.15);
+      color: var(--red);
+      border: 1px solid rgba(239,71,111,0.25);
+    }
+    .divider {
+      height: 1px;
+      background: var(--card-border);
+      margin: 20px 0;
+    }
+
+    @media (max-width: 700px) {
+      .nav { padding: 14px 20px; }
+      .nav-tabs { display: none; }
+      .landing, .detail-page, .id-card-page { padding: 24px 20px; }
+      .stats-row { grid-template-columns: 1fr; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .detail-header { flex-direction: column; }
+      .id-card { width: 100%; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.4s ease both; }
+    .fade-up-2 { animation: fadeUp 0.4s 0.1s ease both; }
+    .fade-up-3 { animation: fadeUp 0.4s 0.2s ease both; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ─── DATA ─────────────────────────────────────────────────────
+const DATA = {
+  patients: [
+    {
+      id: "KCH/HMO/AHS/65",
+      type: "patient",
+      name: "AKPAN OKON EMMANUEL",
+      gender: "male",
+      phone: "+2347059361540",
+      age: 40,
+      dob: "12 Aug 1985",
+      cardType: "Individual Card",
+      insurance: {
+        provider: "Alliance",
+        enrolleeId: "AHS/SNL-EPL/ZN-1/23/1952",
+      },
+      consultant: "Dr. Bassey",
+      unit: "General Practitioner",
+      order: {
+        provider: "Dr. Bassey",
+        time: "Monday, March 16, 2026 12:35 PM",
+      },
+      vitals: {
+        date: "Monday, March 16, 2026 12:35 PM",
+        bp: "109.0/58.0 mmHg",
+        weight: "56.0 kg",
+        pulse: "78.0 bpm",
+        temp: "36.0 °C",
+      },
+      diagnosis: "MALARIA",
+      review: "FEVER X 1/52",
+      physicalExam: "GCS",
+      assessment: "MALARIA",
+      plan: "FBC (Full Blood Count)",
+      lab: "Malaria Parasite (MP)",
+      drugs: [
+        { name: "Tab CIPROFLOXACIN 500MG", dose: "bd for 5 Days" },
+        { name: "Tab PARACETAMOL 1000MG", dose: "bd for 3 Days" },
+        { name: "Tab Artemether Lumefantrine (ACT) 80/480MG", dose: "bd for 3 Days" },
+      ],
+    },
+    {
+      id: "KCH/HMO/AHS/72",
+      type: "patient",
+      name: "CHUKWU ADAEZE NGOZI",
+      gender: "female",
+      phone: "+2348023456789",
+      age: 32,
+      dob: "04 Mar 1993",
+      cardType: "Family Card",
+      insurance: {
+        provider: "Hygeia HMO",
+        enrolleeId: "HYG/FCT-ZN-2/24/0043",
+      },
+      consultant: "Dr. Okafor",
+      unit: "Obstetrics & Gynaecology",
+      order: {
+        provider: "Dr. Okafor",
+        time: "Tuesday, March 17, 2026 09:15 AM",
+      },
+      vitals: {
+        date: "Tuesday, March 17, 2026 09:15 AM",
+        bp: "120.0/80.0 mmHg",
+        weight: "68.0 kg",
+        pulse: "82.0 bpm",
+        temp: "37.2 °C",
+      },
+      diagnosis: "URINARY TRACT INFECTION",
+      review: "DYSURIA X 3/7",
+      physicalExam: "Suprapubic tenderness",
+      assessment: "UTI",
+      plan: "Urine MCS, FBC",
+      lab: "Urine Microscopy, Culture & Sensitivity",
+      drugs: [
+        { name: "Tab AMOXICILLIN-CLAVULANATE 625MG", dose: "bd for 7 Days" },
+        { name: "Tab METRONIDAZOLE 400MG", dose: "tds for 5 Days" },
+        { name: "Tab VITAMIN C 1000MG", dose: "od for 7 Days" },
+      ],
+    },
+    {
+      id: "KCH/HMO/AHS/88",
+      type: "patient",
+      name: "IBRAHIM MUSA BELLO",
+      gender: "male",
+      phone: "+2349034567890",
+      age: 55,
+      dob: "19 Nov 1970",
+      cardType: "Individual Card",
+      insurance: {
+        provider: "NHIA",
+        enrolleeId: "NHIA/ABJ-ZN-5/23/7821",
+      },
+      consultant: "Dr. Adeyemi",
+      unit: "Internal Medicine",
+      order: {
+        provider: "Dr. Adeyemi",
+        time: "Wednesday, March 18, 2026 02:45 PM",
+      },
+      vitals: {
+        date: "Wednesday, March 18, 2026 02:45 PM",
+        bp: "158.0/98.0 mmHg",
+        weight: "82.0 kg",
+        pulse: "88.0 bpm",
+        temp: "36.8 °C",
+      },
+      diagnosis: "HYPERTENSION",
+      review: "HEADACHE + DIZZINESS X 1/52",
+      physicalExam: "BP elevated bilaterally",
+      assessment: "Uncontrolled Hypertension",
+      plan: "ECG, FBC, RFT, Lipid Profile",
+      lab: "Renal Function Test, Lipid Profile",
+      drugs: [
+        { name: "Tab AMLODIPINE 10MG", dose: "od for 30 Days" },
+        { name: "Tab LOSARTAN 50MG", dose: "bd for 30 Days" },
+        { name: "Tab HYDROCHLOROTHIAZIDE 25MG", dose: "od for 30 Days" },
+      ],
+    },
+  ],
+
+  doctors: [
+    {
+      id: "KCH/DOC/001",
+      type: "doctor",
+      name: "DR. EMEKA BASSEY",
+      gender: "male",
+      specialty: "General Practice",
+      phone: "+2348012345678",
+      email: "e.bassey@kch.ng",
+      age: 45,
+      dob: "07 Jun 1980",
+      qualification: "MBBS, FMCGP",
+      licenseNo: "MDN/2010/18432",
+      unit: "General Outpatient Dept.",
+      yearsExp: 15,
+      availability: "Mon – Fri, 8AM – 4PM",
+      patients: 312,
+      consultationsToday: 18,
+      nextLeave: "April 1–5, 2026",
+      bio: "Dr. Bassey is a seasoned General Practitioner with over 15 years of experience in primary care, managing chronic conditions, and preventive medicine. He is passionate about patient-centred care and community health outreach.",
+    },
+    {
+      id: "KCH/DOC/004",
+      type: "doctor",
+      name: "DR. FUNKE OKAFOR",
+      gender: "female",
+      specialty: "Obstetrics & Gynaecology",
+      phone: "+2348098765432",
+      email: "f.okafor@kch.ng",
+      age: 38,
+      dob: "22 Jan 1988",
+      qualification: "MBBS, FMCOG",
+      licenseNo: "MDN/2015/22189",
+      unit: "Obstetrics & Gynaecology",
+      yearsExp: 10,
+      availability: "Mon – Sat, 9AM – 5PM",
+      patients: 245,
+      consultationsToday: 12,
+      nextLeave: "March 25–27, 2026",
+      bio: "Dr. Okafor is a highly skilled OB-GYN specialising in high-risk pregnancies, minimally invasive gynaecological surgery, and women's reproductive health. She holds additional fellowships in maternal-foetal medicine.",
+    },
+  ],
+
+  nurses: [
+    {
+      id: "KCH/NRS/012",
+      type: "nurse",
+      name: "BLESSING UCHENNA NWOSU",
+      gender: "female",
+      rank: "Senior Registered Nurse",
+      phone: "+2348056781234",
+      email: "b.nwosu@kch.ng",
+      age: 35,
+      dob: "15 Apr 1990",
+      qualification: "BNSc, RN, RM",
+      licenseNo: "NMCN/2013/56231",
+      unit: "General Ward / ICU Float",
+      yearsExp: 12,
+      shift: "Morning Shift (6AM – 2PM)",
+      assignedBed: "Ward B, Beds 10–18",
+      certifications: ["BLS", "ACLS", "PICU"],
+      bio: "Nurse Nwosu is a dedicated senior nurse with expertise in critical care and general ward management. Known for her calm demeanour under pressure and exceptional patient advocacy skills.",
+    },
+    {
+      id: "KCH/NRS/019",
+      type: "nurse",
+      name: "JAMES OLUWAFEMI ADEYEMI",
+      gender: "male",
+      rank: "Staff Nurse",
+      phone: "+2347061234567",
+      email: "j.adeyemi@kch.ng",
+      age: 28,
+      dob: "30 Sep 1997",
+      qualification: "BNSc, RN",
+      licenseNo: "NMCN/2020/71045",
+      unit: "Emergency & Accident Unit",
+      yearsExp: 5,
+      shift: "Night Shift (10PM – 6AM)",
+      assignedBed: "A&E Bays 1–6",
+      certifications: ["BLS", "TRIAGE Level III"],
+      bio: "Nurse Adeyemi is a sharp, energetic staff nurse working in the fast-paced A&E unit. He has rapidly developed triage expertise and is currently pursuing further training in emergency nursing.",
+    },
+  ],
+};
+
+const ALL_ENTITIES = [...DATA.patients, ...DATA.doctors, ...DATA.nurses];
+
+function getTypeColor(type) {
+  return { patient: "teal", doctor: "gold", nurse: "green" }[type];
+}
+function getAvatar(entity) {
+  const m = { patient: "🧑‍⚕️", doctor: "👨‍⚕️", nurse: "👩‍⚕️" };
+  const f = { patient: "👩‍⚕️", doctor: "👩‍⚕️", nurse: "👩‍⚕️" };
+  if (entity.gender === "female") return f[entity.type] || "👤";
+  return m[entity.type] || "👤";
+}
+
+// ─── QR CODE COMPONENT ────────────────────────────────────────
+function QRCode({ value, size = 64 }) {
+  const ref = useRef(null);
+  const instance = useRef(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.innerHTML = "";
+    instance.current = new window.QRCode(ref.current, {
+      text: value,
+      width: size,
+      height: size,
+      colorDark: "#0a1628",
+      colorLight: "#ffffff",
+      correctLevel: window.QRCode.CorrectLevel.M,
+    });
+  }, [value, size]);
+  return <div ref={ref} />;
+}
+
+// ─── NAV ──────────────────────────────────────────────────────
+function Nav({ page, setPage }) {
+  return (
+    <nav className="nav">
+      <div className="nav-brand" onClick={() => setPage({ name: "home" })} style={{ cursor: "pointer" }}>
+        <div className="nav-logo">⚕</div>
+        <span className="nav-title">KCH <span>MedCard</span></span>
+      </div>
+      <div className="nav-tabs">
+        {["Patients", "Doctors", "Nurses"].map(t => (
+          <button
+            key={t}
+            className={`nav-tab ${page.filter === t.toLowerCase() ? "active" : ""}`}
+            onClick={() => setPage({ name: "home", filter: t.toLowerCase() })}
+          >{t}</button>
+        ))}
+        <button
+          className={`nav-tab ${page.name === "home" && !page.filter ? "active" : ""}`}
+          onClick={() => setPage({ name: "home" })}
+        >All</button>
+      </div>
+    </nav>
+  );
+}
+
+// ─── LANDING ──────────────────────────────────────────────────
+function Landing({ setPage }) {
+  const [filter, setFilter] = useState("all");
+  const entities = filter === "all"
+    ? ALL_ENTITIES
+    : ALL_ENTITIES.filter(e => e.type === filter.replace("s", "").replace("nurse", "nurse").replace("patients", "patient").replace("doctors", "doctor").replace("nurses", "nurse"));
+
+  const filtered = filter === "all" ? ALL_ENTITIES
+    : ALL_ENTITIES.filter(e => {
+        if (filter === "patients") return e.type === "patient";
+        if (filter === "doctors") return e.type === "doctor";
+        if (filter === "nurses") return e.type === "nurse";
+        return true;
+      });
+
+  return (
+    <div className="landing">
+      <div className="landing-hero fade-up">
+        <div className="landing-badge">⚕ Kwali Central Hospital</div>
+        <h1 className="landing-h1">Hospital Identity &<br/><em>Records System</em></h1>
+        <p className="landing-sub">Unified profiles for patients, doctors, and nurses — with digital ID cards and QR verification.</p>
+        <div className="btn-group">
+          <button className="btn btn-primary" onClick={() => setFilter("patients")}>View Patients</button>
+          <button className="btn btn-gold" onClick={() => setFilter("doctors")}>View Doctors</button>
+          <button className="btn btn-outline" onClick={() => setFilter("nurses")}>View Nurses</button>
+        </div>
+      </div>
+
+      <div className="stats-row fade-up-2">
+        <div className="stat-card teal">
+          <div className="stat-num">{DATA.patients.length}</div>
+          <div className="stat-label">Active Patients</div>
+        </div>
+        <div className="stat-card gold">
+          <div className="stat-num">{DATA.doctors.length}</div>
+          <div className="stat-label">Doctors on Staff</div>
+        </div>
+        <div className="stat-card green">
+          <div className="stat-num">{DATA.nurses.length}</div>
+          <div className="stat-label">Nursing Staff</div>
+        </div>
+      </div>
+
+      <div className="section-header fade-up-3">
+        <h2 className="section-title">
+          {filter === "all" ? "All Personnel & Patients" : filter.charAt(0).toUpperCase() + filter.slice(1)}
+        </h2>
+        <div className="section-pill">
+          {["all","patients","doctors","nurses"].map(f => (
+            <button key={f} className={`pill pill-teal ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="entity-grid">
+        {filtered.map(entity => (
+          <EntityCard key={entity.id} entity={entity} setPage={setPage} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EntityCard({ entity, setPage }) {
+  const color = getTypeColor(entity.type);
+  return (
+    <div className="entity-card" onClick={() => setPage({ name: "detail", entity })}>
+      <div className="entity-top">
+        <div className={`avatar avatar-${entity.type}`}>{getAvatar(entity)}</div>
+        <div style={{ flex: 1 }}>
+          <div className="entity-name">{entity.name}</div>
+          <div className="entity-id">{entity.id}</div>
+        </div>
+        <div className={`type-badge badge-${entity.type}`}>{entity.type}</div>
+      </div>
+      <div className="entity-info">
+        <div className="info-item">
+          <span className="info-label">Age</span>
+          <span className="info-val">{entity.age} yrs</span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">Gender</span>
+          <span className="info-val">{entity.gender.charAt(0).toUpperCase() + entity.gender.slice(1)}</span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">Phone</span>
+          <span className="info-val" style={{ fontSize: 11 }}>{entity.phone}</span>
+        </div>
+        <div className="info-item">
+          <span className="info-label">{entity.type === "patient" ? "Unit" : "Specialty / Rank"}</span>
+          <span className="info-val" style={{ fontSize: 11 }}>{entity.unit || entity.specialty || entity.rank}</span>
+        </div>
+      </div>
+      <div className="entity-actions" onClick={e => e.stopPropagation()}>
+        <button className="btn btn-primary btn-sm" onClick={() => setPage({ name: "detail", entity })}>View Profile</button>
+        <button className="btn btn-outline btn-sm" onClick={() => setPage({ name: "idcard", entity })}>ID Card</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── DETAIL PAGE ──────────────────────────────────────────────
+function DetailPage({ entity, setPage }) {
+  if (entity.type === "patient") return <PatientDetail entity={entity} setPage={setPage} />;
+  if (entity.type === "doctor") return <DoctorDetail entity={entity} setPage={setPage} />;
+  return <NurseDetail entity={entity} setPage={setPage} />;
+}
+
+function PatientDetail({ entity, setPage }) {
+  return (
+    <div className="detail-page fade-up">
+      <button className="back-btn" onClick={() => setPage({ name: "home" })}>← Back to All</button>
+
+      <div className={`detail-header patient`}>
+        <div className={`detail-avatar avatar-patient`} style={{ fontSize: 50, background: "rgba(0,180,216,0.12)", border: "2px solid rgba(0,180,216,0.3)", borderRadius: 20 }}>{getAvatar(entity)}</div>
+        <div className="detail-identity">
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
+            <span className="type-badge badge-patient">Patient</span>
+            <span className="tag">{entity.diagnosis}</span>
+          </div>
+          <h1 className="detail-name">{entity.name}</h1>
+          <div className="detail-meta">
+            <div className="detail-meta-item">📋 ID: <span>{entity.id}</span></div>
+            <div className="detail-meta-item">📞 <span>{entity.phone}</span></div>
+            <div className="detail-meta-item">🎂 <span>{entity.dob}</span></div>
+            <div className="detail-meta-item">Age: <span>{entity.age} yrs</span></div>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => setPage({ name: "idcard", entity })}>🪪 View ID Card</button>
+        </div>
+      </div>
+
+      <div className="detail-grid">
+        {/* Insurance */}
+        <div className="detail-section">
+          <div className="section-heading">🛡 Insurance Information</div>
+          <div className="field-row"><span className="field-key">Card Type</span><span className="field-val">{entity.cardType}</span></div>
+          <div className="field-row"><span className="field-key">Provider</span><span className="field-val">{entity.insurance.provider}</span></div>
+          <div className="field-row"><span className="field-key">Enrollee ID</span><span className="field-val" style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11 }}>{entity.insurance.enrolleeId}</span></div>
+          <div className="field-row"><span className="field-key">Consultant</span><span className="field-val">{entity.consultant}</span></div>
+          <div className="field-row"><span className="field-key">Patient Unit</span><span className="field-val">{entity.unit}</span></div>
+        </div>
+
+        {/* Order */}
+        <div className="detail-section">
+          <div className="section-heading gold">📄 Order Information</div>
+          <div className="field-row"><span className="field-key">Ordering Provider</span><span className="field-val">{entity.order.provider}</span></div>
+          <div className="field-row"><span className="field-key">Time Ordered</span><span className="field-val" style={{ fontSize: 12 }}>{entity.order.time}</span></div>
+          <div className="field-row"><span className="field-key">Diagnosis</span><span className="field-val"><span className="tag">{entity.diagnosis}</span></span></div>
+          <div className="field-row"><span className="field-key">Review</span><span className="field-val">{entity.review}</span></div>
+          <div className="field-row"><span className="field-key">Physical Exam</span><span className="field-val">{entity.physicalExam}</span></div>
+        </div>
+
+        {/* Vitals */}
+        <div className="detail-section">
+          <div className="section-heading green">💓 Vitals — {entity.vitals.date}</div>
+          <div className="vital-grid">
+            <div className="vital-item"><div className="vital-label">Blood Pressure</div><div className="vital-val">{entity.vitals.bp}</div></div>
+            <div className="vital-item"><div className="vital-label">Weight</div><div className="vital-val">{entity.vitals.weight}</div></div>
+            <div className="vital-item"><div className="vital-label">Pulse Rate</div><div className="vital-val">{entity.vitals.pulse}</div></div>
+            <div className="vital-item"><div className="vital-label">Temperature</div><div className="vital-val">{entity.vitals.temp}</div></div>
+          </div>
+        </div>
+
+        {/* Assessment */}
+        <div className="detail-section">
+          <div className="section-heading red">🔬 Assessment & Plan</div>
+          <div className="field-row"><span className="field-key">Assessment</span><span className="field-val">{entity.assessment}</span></div>
+          <div className="field-row"><span className="field-key">Plan</span><span className="field-val">{entity.plan}</span></div>
+          <div className="field-row"><span className="field-key">Lab Request</span><span className="field-val">{entity.lab}</span></div>
+        </div>
+
+        {/* Drugs */}
+        <div className="detail-section full">
+          <div className="section-heading gold">💊 Drug Instructions</div>
+          <div className="drug-list">
+            {entity.drugs.map((d, i) => (
+              <div key={i} className="drug-item">
+                <div className="drug-name">{d.name}</div>
+                <div style={{ fontSize: 12, color: "var(--gray-300)" }}>{d.dose}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DoctorDetail({ entity, setPage }) {
+  return (
+    <div className="detail-page fade-up">
+      <button className="back-btn" onClick={() => setPage({ name: "home" })}>← Back to All</button>
+      <div className="detail-header doctor">
+        <div className="detail-avatar avatar-doctor" style={{ fontSize: 50, background: "rgba(244,162,97,0.12)", border: "2px solid rgba(244,162,97,0.3)", borderRadius: 20 }}>{getAvatar(entity)}</div>
+        <div className="detail-identity">
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
+            <span className="type-badge badge-doctor">Doctor</span>
+          </div>
+          <h1 className="detail-name">{entity.name}</h1>
+          <div className="detail-meta">
+            <div className="detail-meta-item">📋 ID: <span>{entity.id}</span></div>
+            <div className="detail-meta-item">🩺 <span>{entity.specialty}</span></div>
+            <div className="detail-meta-item">📞 <span>{entity.phone}</span></div>
+            <div className="detail-meta-item">✉️ <span>{entity.email}</span></div>
+          </div>
+          <button className="btn btn-gold btn-sm" onClick={() => setPage({ name: "idcard", entity })}>🪪 View ID Card</button>
+        </div>
+      </div>
+
+      <div className="detail-grid">
+        <div className="detail-section">
+          <div className="section-heading gold">👤 Personal Information</div>
+          <div className="field-row"><span className="field-key">Date of Birth</span><span className="field-val">{entity.dob}</span></div>
+          <div className="field-row"><span className="field-key">Age</span><span className="field-val">{entity.age} yrs</span></div>
+          <div className="field-row"><span className="field-key">Gender</span><span className="field-val">{entity.gender.charAt(0).toUpperCase() + entity.gender.slice(1)}</span></div>
+          <div className="field-row"><span className="field-key">Phone</span><span className="field-val">{entity.phone}</span></div>
+          <div className="field-row"><span className="field-key">Email</span><span className="field-val" style={{ fontSize: 12 }}>{entity.email}</span></div>
+        </div>
+        <div className="detail-section">
+          <div className="section-heading">🏥 Professional Details</div>
+          <div className="field-row"><span className="field-key">Qualification</span><span className="field-val">{entity.qualification}</span></div>
+          <div className="field-row"><span className="field-key">License No.</span><span className="field-val" style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11 }}>{entity.licenseNo}</span></div>
+          <div className="field-row"><span className="field-key">Unit</span><span className="field-val">{entity.unit}</span></div>
+          <div className="field-row"><span className="field-key">Experience</span><span className="field-val">{entity.yearsExp} Years</span></div>
+          <div className="field-row"><span className="field-key">Availability</span><span className="field-val" style={{ fontSize: 12 }}>{entity.availability}</span></div>
+        </div>
+        <div className="detail-section">
+          <div className="section-heading green">📊 Activity</div>
+          <div className="vital-grid">
+            <div className="vital-item"><div className="vital-label">Total Patients</div><div className="vital-val">{entity.patients}</div></div>
+            <div className="vital-item"><div className="vital-label">Today's Consults</div><div className="vital-val">{entity.consultationsToday}</div></div>
+          </div>
+          <div className="field-row" style={{ marginTop: 12 }}><span className="field-key">Next Leave</span><span className="field-val" style={{ fontSize: 12 }}>{entity.nextLeave}</span></div>
+        </div>
+        <div className="detail-section">
+          <div className="section-heading">📝 Biography</div>
+          <p style={{ fontSize: 13, color: "var(--gray-300)", lineHeight: 1.8 }}>{entity.bio}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NurseDetail({ entity, setPage }) {
+  return (
+    <div className="detail-page fade-up">
+      <button className="back-btn" onClick={() => setPage({ name: "home" })}>← Back to All</button>
+      <div className="detail-header nurse">
+        <div className="detail-avatar avatar-nurse" style={{ fontSize: 50, background: "rgba(6,214,160,0.12)", border: "2px solid rgba(6,214,160,0.3)", borderRadius: 20 }}>{getAvatar(entity)}</div>
+        <div className="detail-identity">
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
+            <span className="type-badge badge-nurse">Nurse</span>
+          </div>
+          <h1 className="detail-name">{entity.name}</h1>
+          <div className="detail-meta">
+            <div className="detail-meta-item">📋 ID: <span>{entity.id}</span></div>
+            <div className="detail-meta-item">🏷️ <span>{entity.rank}</span></div>
+            <div className="detail-meta-item">📞 <span>{entity.phone}</span></div>
+            <div className="detail-meta-item">🏥 <span>{entity.unit}</span></div>
+          </div>
+          <button className="btn btn-outline btn-sm" onClick={() => setPage({ name: "idcard", entity })}>🪪 View ID Card</button>
+        </div>
+      </div>
+
+      <div className="detail-grid">
+        <div className="detail-section">
+          <div className="section-heading green">👤 Personal Information</div>
+          <div className="field-row"><span className="field-key">Date of Birth</span><span className="field-val">{entity.dob}</span></div>
+          <div className="field-row"><span className="field-key">Age</span><span className="field-val">{entity.age} yrs</span></div>
+          <div className="field-row"><span className="field-key">Gender</span><span className="field-val">{entity.gender.charAt(0).toUpperCase() + entity.gender.slice(1)}</span></div>
+          <div className="field-row"><span className="field-key">Phone</span><span className="field-val">{entity.phone}</span></div>
+          <div className="field-row"><span className="field-key">Email</span><span className="field-val" style={{ fontSize: 12 }}>{entity.email}</span></div>
+        </div>
+        <div className="detail-section">
+          <div className="section-heading">🏥 Professional Details</div>
+          <div className="field-row"><span className="field-key">Qualification</span><span className="field-val">{entity.qualification}</span></div>
+          <div className="field-row"><span className="field-key">NMCN License</span><span className="field-val" style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11 }}>{entity.licenseNo}</span></div>
+          <div className="field-row"><span className="field-key">Unit</span><span className="field-val">{entity.unit}</span></div>
+          <div className="field-row"><span className="field-key">Experience</span><span className="field-val">{entity.yearsExp} Years</span></div>
+          <div className="field-row"><span className="field-key">Shift</span><span className="field-val" style={{ fontSize: 12 }}>{entity.shift}</span></div>
+          <div className="field-row"><span className="field-key">Assigned Area</span><span className="field-val" style={{ fontSize: 12 }}>{entity.assignedBed}</span></div>
+        </div>
+        <div className="detail-section">
+          <div className="section-heading teal">🎖️ Certifications</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+            {entity.certifications.map(c => (
+              <span key={c} style={{ padding: "5px 14px", borderRadius: 8, background: "rgba(0,180,216,0.1)", border: "1px solid rgba(0,180,216,0.2)", color: "var(--teal)", fontSize: 13, fontWeight: 600 }}>{c}</span>
+            ))}
+          </div>
+        </div>
+        <div className="detail-section">
+          <div className="section-heading">📝 Biography</div>
+          <p style={{ fontSize: 13, color: "var(--gray-300)", lineHeight: 1.8 }}>{entity.bio}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ID CARD PAGE ─────────────────────────────────────────────
+function IDCardPage({ entity, setPage }) {
+  const BASE_URL = "https://kch-medcard.vercel.app";
+  const qrValue = `${BASE_URL}/?id=${encodeURIComponent(entity.id)}&type=${entity.type}`;
+  const color = getTypeColor(entity.type);
+  const colorVar = color === "teal" ? "var(--teal)" : color === "gold" ? "var(--gold)" : "var(--green)";
+  const badgeColors = {
+    patient: { bg: "rgba(0,180,216,0.15)", color: "var(--teal)", text: "PATIENT" },
+    doctor: { bg: "rgba(244,162,97,0.15)", color: "var(--gold)", text: "MEDICAL OFFICER" },
+    nurse: { bg: "rgba(6,214,160,0.15)", color: "var(--green)", text: "NURSING STAFF" },
+  }[entity.type];
+
+  return (
+    <div className="id-card-page fade-up">
+      <button className="back-btn" onClick={() => setPage({ name: "detail", entity })}>← Back to Profile</button>
+
+      <h2 style={{ fontFamily: "DM Serif Display, serif", fontSize: 28, color: "var(--white)", marginBottom: 32 }}>
+        Identity Card — <span style={{ color: colorVar }}>{entity.name}</span>
+      </h2>
+
+      <div className="id-card-wrapper">
+        {/* The actual card */}
+        <div className="id-card">
+          <div className="id-card-top">
+            <div>
+              <div className="hospital-name">Kwali Central Hospital</div>
+              <div className="hospital-sub">Federal Capital Territory, Abuja</div>
+            </div>
+            <div className="card-type-badge" style={{ background: badgeColors.bg, color: badgeColors.color }}>
+              {badgeColors.text}
+            </div>
+          </div>
+
+          <div className="id-card-body">
+            <div className={`card-avatar avatar-${entity.type}`}>{getAvatar(entity)}</div>
+            <div className="card-info">
+              <div className="card-name">{entity.name}</div>
+              <div className="card-id">{entity.id}</div>
+              <div className="card-fields">
+                <div className="card-field"><span className="cf-label">Age</span><span className="cf-val">{entity.age} yrs</span></div>
+                <div className="card-field"><span className="cf-label">DOB</span><span className="cf-val">{entity.dob}</span></div>
+                {entity.type === "patient" && <>
+                  <div className="card-field"><span className="cf-label">Unit</span><span className="cf-val">{entity.unit}</span></div>
+                  <div className="card-field"><span className="cf-label">HMO</span><span className="cf-val">{entity.insurance?.provider}</span></div>
+                </>}
+                {entity.type === "doctor" && <>
+                  <div className="card-field"><span className="cf-label">Dept.</span><span className="cf-val">{entity.specialty}</span></div>
+                  <div className="card-field"><span className="cf-label">Qual.</span><span className="cf-val">{entity.qualification}</span></div>
+                </>}
+                {entity.type === "nurse" && <>
+                  <div className="card-field"><span className="cf-label">Rank</span><span className="cf-val">{entity.rank}</span></div>
+                  <div className="card-field"><span className="cf-label">Unit</span><span className="cf-val">{entity.unit}</span></div>
+                </>}
+                <div className="card-field"><span className="cf-label">Tel.</span><span className="cf-val">{entity.phone}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="id-card-footer">
+            <div className="qr-container">
+              <QRCode value={qrValue} size={60} />
+            </div>
+            <div className="id-card-footer-text">
+              <strong>Scan to verify</strong>
+              Kwali Central Hospital<br/>
+              Valid through Dec 2026<br/>
+              If found, call: 0800-KCH-HELP
+            </div>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="card-controls">
+          <h3>QR Code Details</h3>
+          <div className="qr-info-box">
+            <p>When someone scans this QR code with their phone camera, it opens this profile directly in their browser — no app needed. The URL below is what gets encoded into the QR.</p>
+            <div className="qr-url">{qrValue}</div>
+            <p className="print-hint" style={{ marginTop: 10, marginBottom: 0 }}>
+              💡 Replace <strong style={{color:"var(--gray-300)"}}>kch-medcard.vercel.app</strong> with your actual domain before going live.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <button className="btn btn-primary" onClick={() => setPage({ name: "detail", entity })}>
+              👁 View Full Profile
+            </button>
+            <button className="btn btn-outline" onClick={() => window.print()}>
+              🖨️ Print ID Card
+            </button>
+            <button className="btn btn-outline" onClick={() => setPage({ name: "home" })}>
+              ← Back to Directory
+            </button>
+          </div>
+
+          <div className="divider" />
+          <div style={{ fontSize: 12, color: "var(--gray-500)", lineHeight: 1.8 }}>
+            <strong style={{ color: "var(--gray-300)", display: "block", marginBottom: 4 }}>How QR works</strong>
+            Each entity gets a unique ID embedded in a QR code. When scanned, it opens a URL that routes directly to their profile page — showing name, credentials, diagnosis (patients), or shift info (nurses).
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── QR VERIFY BANNER ─────────────────────────────────────────
+function QRBanner({ entity, onDismiss }) {
+  return (
+    <div style={{
+      background: "linear-gradient(90deg, rgba(6,214,160,0.15), rgba(0,180,216,0.1))",
+      border: "1px solid rgba(6,214,160,0.3)",
+      borderRadius: 12,
+      padding: "14px 20px",
+      display: "flex", alignItems: "center", gap: 14,
+      margin: "0 40px 0",
+      marginTop: 20,
+      flexWrap: "wrap",
+    }}>
+      <span style={{ fontSize: 22 }}>✅</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 700, color: "var(--green)", fontSize: 13, marginBottom: 2 }}>
+          QR Code Verified — Authentic Record
+        </div>
+        <div style={{ fontSize: 12, color: "var(--gray-300)" }}>
+          You scanned the ID card for <strong style={{ color: "var(--white)" }}>{entity.name}</strong> ({entity.id}). This profile was loaded directly from the QR code.
+        </div>
+      </div>
+      <button onClick={onDismiss} style={{ background: "none", border: "none", color: "var(--gray-500)", cursor: "pointer", fontSize: 18, lineHeight: 1 }}>✕</button>
+    </div>
+  );
+}
+
+// ─── APP ──────────────────────────────────────────────────────
+function App() {
+  // On load, check URL params — if ?id= & ?type= present, route straight to that profile (QR scan flow)
+  function getInitialPage() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const type = params.get("type");
+      if (id && type) {
+        const entity = ALL_ENTITIES.find(e => e.id === decodeURIComponent(id) && e.type === type);
+        if (entity) return { name: "detail", entity, fromQR: true };
+      }
+    } catch(e) {}
+    return { name: "home" };
+  }
+
+  const [page, setPage] = useState(getInitialPage);
+  const [showQRBanner, setShowQRBanner] = useState(() => getInitialPage().fromQR === true);
+
+  function navigate(newPage) {
+    setShowQRBanner(false);
+    setPage(newPage);
+    // Clear QR params from URL without reload
+    try {
+      if (window.history.replaceState && window.location.search) {
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    } catch(e) {}
+  }
+
+  return (
+    <div>
+      <Nav page={page} setPage={navigate} />
+      {showQRBanner && page.name === "detail" && (
+        <QRBanner entity={page.entity} onDismiss={() => setShowQRBanner(false)} />
+      )}
+      {page.name === "home" && <Landing setPage={navigate} />}
+      {page.name === "detail" && <DetailPage entity={page.entity} setPage={navigate} />}
+      {page.name === "idcard" && <IDCardPage entity={page.entity} setPage={navigate} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
